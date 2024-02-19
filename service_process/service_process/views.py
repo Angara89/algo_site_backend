@@ -2,6 +2,8 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
+import copy
+
 @csrf_exempt
 def process_matrix(request):
     if request.method == 'POST':
@@ -22,20 +24,51 @@ def process_matrix(request):
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 # 0 - empty cell
-# 1 - occupied cell
-# 3 - path cell
-# 5 - start cell
-# 6 - end cell
+# o - occupied cell
+# p - path cell
+# s - start cell
+# e - end cell
 
 def process_matrix_function(matrix):
     EMPTY_CELL = 0
-    OCCUPIED_CELL = 1
-    PAHT_CELL = 3
-    START_CELL = 5
-    END_CELL = 6
-    def bfs(matrix, start: tuple, end: tuple):
-        pass
+    OCCUPIED_CELL = 'o'
+    PAHT_CELL = 'p'
+    START_CELL = 's'
+    END_CELL = 'e'
+    def bfs(matrix_main, start: tuple, end: tuple):
+        def build_path(matrix, prev_cell, end: tuple, start: tuple):
+            if matrix[end[0]][end[1]] == 0:
+                return -1
+            path = []
+            lastCell = prev_cell[end]
+            while lastCell != start:
+                path.append(lastCell)
+                lastCell = prev_cell[lastCell]
+            return path
+                
+
+        matrix_temp = copy.deepcopy(matrix_main)
+        matrix_temp[start[0]][start[1]] = 1
+        matrix_temp[end[0]][end[1]] = 0
+        queue = [start]
+        directions = [(1, 0), (0, 1), (-1, 0), (0, -1)]
+        prev_cell = {}
         
+        while len(queue) > 0:
+            row, col = queue.pop(0)
+            if matrix_temp[row][col] == END_CELL:
+                break
+            for dr, dc in directions:
+                new_row, new_col = row + dr, col + dc
+                if 0 <= new_row < len(matrix_temp) and 0 <= new_col < len(matrix_temp[0]) and matrix_temp[new_row][new_col] == EMPTY_CELL:
+                    matrix_temp[new_row][new_col] = matrix_temp[row][col] + 1
+                    prev_cell[(new_row, new_col)] = (row, col)
+                    queue.append((new_row, new_col))
+        for row_debug in matrix_temp:
+            print(row_debug)
+        path_start_to_end = build_path(matrix_temp, prev_cell, end, start)
+        print("path_start_to_end ", path_start_to_end)
+        return matrix_temp, path_start_to_end
 
     start_row, start_col = None, None
     end_row, end_col = None, None
@@ -49,7 +82,12 @@ def process_matrix_function(matrix):
     if start_row is None or start_col is None or end_row is None or end_col is None:
         return matrix
 
-    path = build_path(start_row, start_col)
-    for row, col in path:
-        matrix[row][col] = 3
+    matrix_with_path, path = bfs(matrix, (start_row, start_col), (end_row, end_col))
+    
+    if path == -1:
+        return matrix
+    else:
+        for row, col in path:
+            matrix[row][col] = 3
+        
     return matrix
