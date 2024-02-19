@@ -31,10 +31,10 @@ def process_matrix(request):
 
 def process_matrix_function(matrix):
     EMPTY_CELL = 0
-    OCCUPIED_CELL = 'o'
-    PAHT_CELL = 'p'
-    START_CELL = 's'
-    END_CELL = 'e'
+    OCCUPIED_CELL = 1
+    PAHT_CELL = 'P'
+    START_CELL = 'S'
+    END_CELL = 'E'
     def bfs(matrix_main, start: tuple, end: tuple):
         def build_path(matrix, prev_cell, end: tuple, start: tuple):
             if matrix[end[0]][end[1]] == 0:
